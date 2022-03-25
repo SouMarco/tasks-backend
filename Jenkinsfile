@@ -43,8 +43,10 @@ pipeline {
 
         stage ('API test') {
             steps {
-                git credentialsId: 'GIthub_login', url: 'https://github.com/SouMarco/tasks-api-test'
-                bat 'mvn clean test'
+                dir('api-test') {
+                    git credentialsId: 'GIthub_login', url: 'https://github.com/SouMarco/tasks-api-test'
+                    bat 'mvn clean test'
+                }
             }
         }
     }
