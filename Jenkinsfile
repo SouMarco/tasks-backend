@@ -1,19 +1,19 @@
 pipeline {
     agent any
     stages {
-        stage ('Build Backend') {
+        stage ('Backend Build') {
             steps {
                 bat 'mvn clean package -DskipTests=true'
             }
         }
 
-        stage ('Unit tests') {
+        stage ('Backend  Unit tests') {
             steps {
                 bat 'mvn test'
             }
         }
 
-        stage ('Sonar Analysis') {
+        stage ('Backend Sonar Analysis') {
 
             environment {
                 def scannerHome = tool 'SONAR_SCANNER'
@@ -26,7 +26,7 @@ pipeline {
             }
         }
 
-        stage ('Quality Gate') {
+        stage ('Backend Quality Gate') {
             steps {
                 sleep(30)
                 timeout(time: 1, unit: 'MINUTES') {
@@ -35,17 +35,34 @@ pipeline {
             }
         }
 
-        stage ('Deploy Backend') {
+        stage ('Backend Deploy') {
             steps {
                 deploy adapters: [tomcat8(credentialsId: 'TomcatLogin', path: '', url: 'http://localhost:8001/')], contextPath: 'tasks-backend', onFailure: false, war: 'target/tasks-backend.war'
             }
         }
 
-        stage ('API test') {
+        stage ('API Unit test') {
             steps {
                 dir('api-test') {
                     git credentialsId: 'GIthub_login', url: 'https://github.com/SouMarco/tasks-api-test'
                     bat 'mvn clean test'
+                }
+            }
+        }
+        
+        stage ('Frontend Build') {
+            steps {
+                dir('tasks-frontend') {
+                    git credentialsId: 'GIthub_login', url: 'https://github.com/SouMarco/tasks-frontend'
+                    bat 'mvn clean package'
+                }
+            }
+        }
+
+        stage ('Frontend Deploy') {
+            steps {
+                dir('tasks-frontend') {
+                    deploy adapters: [tomcat8(credentialsId: 'TomcatLogin', path: '', url: 'http://localhost:8001/')], contextPath: 'tasks', onFailure: false, war: 'target/tasks.war'
                 }
             }
         }
